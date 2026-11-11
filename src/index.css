@@ -7,3 +7,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+.diary-nav-item .diary-item-actions {
+  opacity: 0;
+}
+
+.diary-nav-item:hover .diary-item-actions,
+.diary-nav-item:focus-within .diary-item-actions {
+  opacity: 1;
+}

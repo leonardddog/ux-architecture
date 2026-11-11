@@ -2,13 +2,20 @@ import { useEffect, useState } from 'react'
 import {
   WuAppHeader,
   WuAppHeaderSearch,
+  WuButton,
   WuFooter,
+  WuIcon,
   WuSidebar,
 } from '@npm-questionpro/wick-ui-lib'
 import { demoUser, PRODUCT_NAME, productCategories } from './data/appHeader'
 import { AppSidebar } from './components/AppSidebar'
+import { DiaryLibrary } from './components/diaries/DiaryLibrary'
+import { SectionHeader } from './components/SectionHeader'
 
-const PAGES: Record<string, { title: string; body: string }> = {
+const PAGES: Record<
+  string,
+  { title: string; body: string; actionLabel?: string }
+> = {
   '#/home': {
     title: 'Home',
     body: 'Overview and recent activity will live here.',
@@ -16,18 +23,22 @@ const PAGES: Record<string, { title: string; body: string }> = {
   '#/ux-research/usability-tests': {
     title: 'Usability tests',
     body: 'Manage and analyze usability test sessions.',
+    actionLabel: 'New usability test',
   },
   '#/qualitative-research/interviews': {
     title: 'Interviews',
     body: 'Schedule and review in-depth interview studies.',
+    actionLabel: 'New interview',
   },
   '#/qualitative-research/focus-groups': {
     title: 'Focus groups',
     body: 'Moderate and analyze focus group discussions.',
+    actionLabel: 'New focus group',
   },
   '#/qualitative-research/diaries': {
     title: 'Diaries',
     body: 'Longitudinal diary study entries and insights.',
+    actionLabel: 'New diary',
   },
   '#/panels': {
     title: 'Panels',
@@ -70,11 +81,28 @@ function App() {
         <WuAppHeaderSearch onSearch={(q) => console.log('search:', q)} />
       </WuAppHeader>
       <WuSidebar Sidebar={<AppSidebar activeRoute={route} />} defaultOpen>
-        <div className="wu-flex-1 wu-p-6 wu-bg-white">
-          <h1 className="wu-text-xl wu-font-semibold wu-text-gray-lead">
-            {page.title}
-          </h1>
-          <p className="wu-mt-2 wu-text-sm wu-text-gray-subtle">{page.body}</p>
+        <div className="wu-flex wu-flex-col wu-flex-1 wu-bg-white">
+          <SectionHeader
+            title={page.title}
+            actions={
+              page.actionLabel ? (
+                <WuButton
+                  variant="primary"
+                  Icon={<WuIcon icon="wm-add-2" />}
+                  onClick={() => console.log('new:', page.actionLabel)}
+                >
+                  {page.actionLabel}
+                </WuButton>
+              ) : undefined
+            }
+          />
+          {route === '#/qualitative-research/diaries' ? (
+            <DiaryLibrary />
+          ) : (
+            <div className="wu-flex-1 wu-p-6">
+              <p className="wu-text-sm wu-text-gray-subtle">{page.body}</p>
+            </div>
+          )}
         </div>
         <WuFooter>
           <span>
