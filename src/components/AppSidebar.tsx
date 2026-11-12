@@ -6,13 +6,17 @@ import {
   WuSidebarItem,
   WuSidebarMenu,
 } from '@npm-questionpro/wick-ui-lib'
+import { DIARY_LIBRARY_ROUTE } from '../data/diaryLibrary'
 
 type AppSidebarProps = {
   activeRoute?: string
 }
 
 export function AppSidebar({ activeRoute }: AppSidebarProps) {
-  const isActive = (href: string) => activeRoute === href
+  const isActive = (href: string) =>
+    activeRoute === href ||
+    (href === DIARY_LIBRARY_ROUTE &&
+      activeRoute?.startsWith(`${DIARY_LIBRARY_ROUTE}/`) === true)
 
   return (
     <>
