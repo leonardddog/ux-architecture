@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { WuButton, WuIcon } from '@npm-questionpro/wick-ui-lib'
 import type { IWuIcons } from '@npm-questionpro/wick-ui-lib'
 import type { DiaryEntry } from '../../data/diaryLibrary'
 import { SectionHeader } from '../SectionHeader'
+import { DiaryAnalytics } from './DiaryAnalytics'
 import { DiaryEdit } from './DiaryEdit'
+import { DiaryInvitationSettings } from './DiaryInvitationSettings'
+import { DiaryModeration } from './DiaryModeration'
 import { DiaryNavIcon } from './DiaryNavIcon'
+import { DiaryParticipants } from './DiaryParticipants'
 
 const FIGMA = {
   border: 'rgba(27, 51, 128, 0.08)',
@@ -193,11 +197,43 @@ export function DiaryStudy({
   onSidebarOpenChange: (open: boolean) => void
 }) {
   const [activeId, setActiveId] = useState(DEFAULT_SECTION)
+  const [participantsView, setParticipantsView] = useState<
+    'list' | 'invitation-settings'
+  >('list')
+  const invitationButtonRef = useRef<HTMLButtonElement>(null)
+  const openedSettingsRef = useRef(false)
+
+  useEffect(() => {
+    if (participantsView === 'list' && openedSettingsRef.current) {
+      openedSettingsRef.current = false
+      invitationButtonRef.current?.focus()
+    }
+  }, [participantsView])
+
+  const openInvitationSettings = () => {
+    openedSettingsRef.current = true
+    setParticipantsView('invitation-settings')
+  }
+
+  const closeInvitationSettings = () => {
+    setParticipantsView('list')
+  }
+
+  const selectSection = (id: string) => {
+    if (id !== 'participants') {
+      openedSettingsRef.current = false
+      setParticipantsView('list')
+    }
+    setActiveId(id)
+  }
 
   const activeItem =
     NAV_ITEMS.find((item) => item.id === activeId) ?? NAV_ITEMS[0]
   const isEdit = activeItem.id === 'edit'
   const isParticipants = activeItem.id === 'participants'
+  const isModeration = activeItem.id === 'moderation'
+  const isAnalytics = activeItem.id === 'analytics'
+  const isFullHeightSection = isParticipants || isModeration || isAnalytics
 
   return (
     <div
@@ -252,14 +288,7 @@ export function DiaryStudy({
               {entry.title}
             </p>
 
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                flexShrink: 0,
-              }}
-            >
+            <div className="diary-study-aside-actions">
               <button
                 type="button"
                 className="diary-icon-button"
@@ -348,7 +377,7 @@ export function DiaryStudy({
                     key={item.id}
                     item={item}
                     active={activeId === item.id}
-                    onSelect={() => setActiveId(item.id)}
+                    onSelect={() => selectSection(item.id)}
                   />
                 ))}
               </div>
@@ -370,7 +399,7 @@ export function DiaryStudy({
               key={item.id}
               item={item}
               active={activeId === item.id}
-              onSelect={() => setActiveId(item.id)}
+              onSelect={() => selectSection(item.id)}
             />
           ))}
         </div>
@@ -381,42 +410,72 @@ export function DiaryStudy({
           flex: 1,
           minWidth: 0,
           minHeight: 0,
-          display: isParticipants ? 'flex' : undefined,
-          flexDirection: isParticipants ? 'column' : undefined,
-          overflowY: isParticipants ? 'hidden' : 'auto',
-          padding: isEdit || isParticipants ? 0 : 32,
+          display: isFullHeightSection ? 'flex' : undefined,
+          flexDirection: isFullHeightSection ? 'column' : undefined,
+          overflowY: isFullHeightSection ? 'hidden' : 'auto',
+          padding: isEdit || isFullHeightSection ? 0 : 32,
           background: FIGMA.white,
         }}
       >
         {isEdit ? (
           <DiaryEdit entry={entry} />
         ) : isParticipants ? (
-          <>
-            <SectionHeader
-              title={activeItem.label}
-              actions={
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <WuButton
-                    variant="secondary"
-                    Icon={<WuIcon icon="wm-settings" />}
-                    onClick={() => console.log('invitation settings')}
-                  >
-                    Invitation settings
-                  </WuButton>
-                  <WuButton
-                    variant="primary"
-                    Icon={<WuIcon icon="wm-person-add" />}
-                    onClick={() => console.log('add people')}
-                  >
-                    Add people
-                  </WuButton>
-                </div>
-              }
-            />
-            <div className="diary-participants-content">
-              <SectionPlaceholder item={activeItem} />
+          <div className="diary-subview-stack">
+            <div
+              className={`diary-subview-panel${
+                participantsView === 'list'
+                  ? ' diary-subview-panel--active'
+                  : ''
+              }`}
+              aria-hidden={participantsView !== 'list'}
+              inert={participantsView !== 'list'}
+            >
+              <SectionHeader
+                title={activeItem.label}
+                actions={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <WuButton
+                      ref={invitationButtonRef}
+                      variant="secondary"
+                      Icon={<WuIcon icon="wm-settings" />}
+                      onClick={openInvitationSettings}
+                    >
+                      Invitation settings
+                    </WuButton>
+                    <WuButton
+                      variant="primary"
+                      Icon={<WuIcon icon="wm-person-add" />}
+                      onClick={() => console.log('add people')}
+                    >
+                      Add people
+                    </WuButton>
+                  </div>
+                }
+              />
+              <div className="diary-participants-content">
+                <DiaryParticipants />
+              </div>
             </div>
-          </>
+
+            <div
+              className={`diary-subview-panel${
+                participantsView === 'invitation-settings'
+                  ? ' diary-subview-panel--active'
+                  : ''
+              }`}
+              aria-hidden={participantsView !== 'invitation-settings'}
+              inert={participantsView !== 'invitation-settings'}
+            >
+              <DiaryInvitationSettings
+                active={participantsView === 'invitation-settings'}
+                onBack={closeInvitationSettings}
+              />
+            </div>
+          </div>
+        ) : isModeration ? (
+          <DiaryModeration />
+        ) : isAnalytics ? (
+          <DiaryAnalytics />
         ) : (
           <>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
